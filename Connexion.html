@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Connexion — KidCycle</title>
+<link rel="stylesheet" href="global.css">
+<style>
+body{margin:0;min-height:100vh;display:flex;flex-direction:column}
+.top-promo{flex-shrink:0}
+.page-wrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:calc(100vh - 42px)}
+/* Photo de fond — enfants sur la plage exactement comme Figma */
+.bg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%}
+.bg-overlay{position:absolute;inset:0;background:rgba(0,0,0,.06)}
+/* Carte blanche centrée */
+.card{
+  position:relative;z-index:2;
+  background:#fff;
+  border-radius:20px;
+  padding:48px 52px 44px;
+  width:560px;max-width:94vw;
+  box-shadow:0 24px 80px rgba(0,0,0,.22),0 4px 20px rgba(0,0,0,.1);
+  animation:cardIn .4s cubic-bezier(.34,1.3,.64,1);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+.card-title{text-align:center;font-size:28px;font-weight:800;color:#1a1a2e;margin-bottom:28px;letter-spacing:-.3px}
+/* Champs */
+.field{position:relative;margin-bottom:14px}
+.field input{
+  width:100%;padding:14px 48px 14px 18px;
+  background:#f4f2fb;border:1.5px solid transparent;
+  border-radius:12px;font-size:14px;font-family:'Nunito',sans-serif;
+  color:#1a1a2e;outline:none;transition:all .22s;
+}
+.field input::placeholder{color:#bbb;font-size:13px}
+.field input:focus{background:#fff;border-color:#9b8ec4;box-shadow:0 0 0 3px rgba(155,142,196,.12)}
+.eye-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#bbb;font-size:19px;padding:4px;transition:color .2s}
+.eye-btn:hover{color:#9b8ec4}
+/* Row middle */
+.row-mid{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;font-size:13px}
+.remember{display:flex;align-items:center;gap:8px;cursor:pointer;color:#555;font-weight:600}
+.remember input{width:16px;height:16px;accent-color:#9b8ec4;cursor:pointer}
+.forgot{color:#9b8ec4;font-weight:700;text-decoration:none;transition:color .2s}
+.forgot:hover{color:#7d6fb0;text-decoration:underline}
+/* Bouton */
+.btn-login{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,#b8a9d4,#9b8ec4);
+  color:#fff;border:none;border-radius:12px;
+  font-size:15px;font-weight:800;font-family:'Nunito',sans-serif;
+  cursor:pointer;box-shadow:0 4px 16px rgba(155,142,196,.4);
+  transition:all .22s;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(155,142,196,.5)}
+.btn-login:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.signup{text-align:center;font-size:13px;color:#888}
+.signup a{color:#9b8ec4;font-weight:700;text-decoration:none}
+.signup a:hover{text-decoration:underline}
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* Error */
+.err-msg{background:#fff0f0;border:1.5px solid #f0c0c0;border-radius:10px;padding:10px 14px;font-size:13px;color:#c00;margin-bottom:14px;display:none;font-weight:600;animation:shk .3s ease}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+</head>
+<body>
+
+<div class="top-promo">
+  <div class="top-promo-left">Livraison gratuite pour toutes les commandes de plus de 50 €</div>
+  <div class="top-promo-right"><a href="#">Faqs</a><a href="#">ℹ Besoin d'aide?</a></div>
+</div>
+
+<div class="page-wrap">
+  <!-- Photo réelle — enfants sur la plage (comme Figma) -->
+  <img class="bg-photo"
+    src="photos/enfants.jpg"
+    alt=""
+    onerror="this.src='photos/acc.png';this.onerror=null;">
+  <div class="bg-overlay"></div>
+
+  <div class="card">
+    <h1 class="card-title">Connexion</h1>
+    <div class="err-msg" id="err-msg"></div>
+
+    <div class="field">
+      <input type="email" id="email" placeholder="Email" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <input type="password" id="pwd" placeholder="Password" autocomplete="current-password">
+      <button class="eye-btn" type="button" onclick="toggleEye('pwd',this)">👁</button>
+    </div>
+
+    <div class="row-mid">
+      <label class="remember">
+        <input type="checkbox" id="remember"> Se souvenir de moi
+      </label>
+      <a href="#" class="forgot" onclick="forgotPwd(event)">Mot de passe oublié</a>
+    </div>
+
+    <button class="btn-login" id="btn-login" onclick="doLogin()">
+      Connecter →
+    </button>
+
+    <p class="signup">
+      Vous n'avez pas de compte ?&nbsp;<a href="inscription.html">S'inscrire</a>
+    </p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+// Auto redirect si déjà connecté
+(function(){
+  try{var u=JSON.parse(localStorage.getItem('kc_user'));if(u&&localStorage.getItem('kc_tok'))location.href='index.html';}catch(e){}
+})();
+
+function toggleEye(id,btn){
+  var inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁':'🙈';
+}
+
+function showErr(msg){
+  var e=document.getElementById('err-msg');
+  e.textContent=msg;e.style.display='block';
+  setTimeout(function(){e.style.display='none';},5000);
+}
+
+function forgotPwd(e){
+  e.preventDefault();
+  var em=document.getElementById('email').value.trim();
+  if(!em||!em.includes('@')){showErr('Entrez votre email ci-dessus pour réinitialiser.');return;}
+  KC.toast('Lien de réinitialisation envoyé à '+em+' 📧','ok');
+}
+
+function doLogin(){
+  var em=document.getElementById('email').value.trim();
+  var pw=document.getElementById('pwd').value;
+  var btn=document.getElementById('btn-login');
+  if(!em){showErr('L\'email est obligatoire.');return;}
+  if(!em.includes('@')){showErr('Adresse email invalide.');return;}
+  if(!pw){showErr('Le mot de passe est obligatoire.');return;}
+
+  btn.innerHTML='<span class="spinner"></span> Connexion...';
+  btn.disabled=true;
+
+  fetch('api/auth.php?action=login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:em,password:pw})
+  })
+  .then(function(r){return r.json();})
+  .then(function(r){
+    btn.innerHTML='Connecter →'; btn.disabled=false;
+    if(!r.ok){showErr(r.err||'Identifiants incorrects.');return;}
+    // Se souvenir
+    if(document.getElementById('remember').checked){
+      localStorage.setItem('kc_remember','1');
+    }
+    KC.setSession(r.user, r.token);
+    KC.toast('Bienvenue '+r.user.prenom+' ! 🎉','ok');
+    // Effet visuel avant redirect
+    setTimeout(function(){
+      var rd=sessionStorage.getItem('kc_redirect')||'index.html';
+      sessionStorage.removeItem('kc_redirect');
+      location.href=rd;
+    },700);
+  })
+  .catch(function(){
+    btn.innerHTML='Connecter →'; btn.disabled=false;
+    showErr('Erreur réseau. Vérifiez votre connexion.');
+  });
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter') doLogin();
+});
+</script>
+</body>
+</html>

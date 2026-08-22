@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Livraison & Paiement — KidCycle</title>
+<link rel="stylesheet" href="global.css">
+<style>
+body{background:var(--bg)}
+.checkout-wrap{max-width:1100px;margin:0 auto;padding:32px 24px}
+/* Stepper */
+.stepper{display:flex;align-items:center;justify-content:center;margin-bottom:36px;gap:0}
+.step{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.step-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;transition:all .3s;border:2.5px solid var(--border);background:#fff;color:var(--text-light)}
+.step-num.active{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 3px 12px rgba(155,142,196,.35)}
+.step-num.done{background:var(--green);color:#fff;border-color:var(--green)}
+.step-label{font-size:13px;font-weight:700;color:var(--text-light);transition:color .3s}
+.step-label.active{color:var(--purple)}
+.step-label.done{color:var(--green)}
+.step-line{width:120px;height:2px;background:var(--border);margin:0 12px;margin-top:-18px;transition:background .3s}
+.step-line.done{background:var(--green)}
+/* Grid layout */
+.checkout-grid{display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start}
+/* Panel gauche */
+.checkout-panel{background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);padding:28px;box-shadow:var(--shadow-sm)}
+.panel-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:22px}
+/* Adresse fieldset style Figma */
+.address-fieldset{position:relative;border:2px solid var(--purple);border-radius:12px;padding:18px 16px 14px;margin-bottom:18px}
+.address-legend{position:absolute;top:-10px;left:14px;background:#fff;padding:0 6px;font-size:12px;font-weight:700;color:var(--purple)}
+.address-input{width:100%;border:none;outline:none;font-size:15px;font-family:'Nunito',sans-serif;color:var(--text);background:transparent;line-height:1.5}
+.address-note{font-size:12px;color:var(--text-light);margin-top:6px}
+.address-pin{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:22px;color:#333}
+.btn-modify-addr{width:100%;padding:13px;background:var(--purple-l);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Nunito',sans-serif;margin-bottom:22px}
+.btn-modify-addr:hover{background:var(--purple-d)}
+/* Expedition options */
+.exp-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:14px}
+.exp-option{display:flex;align-items:flex-start;gap:14px;padding:16px;border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.exp-option:hover,.exp-option.selected{border-color:var(--purple);background:var(--purple-pale)}
+.exp-radio{width:18px;height:18px;accent-color:var(--purple);flex-shrink:0;margin-top:2px;cursor:pointer}
+.exp-info{flex:1}
+.exp-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.exp-sub{font-size:12px;color:var(--text-light)}
+.exp-price{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap}
+/* Recap droite */
+.recap-panel{background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);padding:24px;box-shadow:var(--shadow-sm);position:sticky;top:82px}
+.recap-title{font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px}
+.recap-title-price{font-size:17px;font-weight:800;color:var(--warn)}
+.recap-items{margin-bottom:16px;max-height:280px;overflow-y:auto}
+.recap-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.recap-item:last-child{border-bottom:none}
+.recap-item img{width:52px;height:52px;object-fit:contain;background:var(--bg);border-radius:8px;padding:5px;flex-shrink:0}
+.recap-item-info{flex:1}
+.recap-item-name{font-size:13px;font-weight:700}
+.recap-item-sub{font-size:11px;color:var(--text-light)}
+.recap-item-sub a{color:var(--red);text-decoration:underline;cursor:pointer}
+.recap-item-price{font-size:14px;font-weight:800;display:flex;align-items:center;gap:4px}
+/* Totaux */
+.recap-totaux{border-top:1.5px solid var(--border);padding-top:14px}
+.recap-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text-mid);margin-bottom:6px;align-items:center}
+.recap-row strong{color:var(--text);font-weight:800}
+.recap-row.total{font-size:16px;font-weight:800;color:var(--text);border-top:1.5px solid var(--border);padding-top:12px;margin-top:8px}
+.recap-row .info-ico{font-size:14px;cursor:help;color:var(--purple);position:relative}
+.info-tooltip{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;width:200px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10;font-weight:400}
+.info-ico:hover .info-tooltip{opacity:1}
+.btn-pay{width:100%;padding:15px;background:var(--purple);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;transition:all .25s;font-family:'Nunito',sans-serif;margin-top:14px}
+.btn-pay:hover{background:var(--purple-d);transform:translateY(-2px);box-shadow:0 8px 24px rgba(155,142,196,.4)}
+.swaps-purchased{color:var(--warn);font-weight:800}
+
+/* ── MODAL EDIT ADRESSE (comme Figma image 7/Livraison-1) ── */
+.modal-addr .modal-box{max-width:520px}
+.flag-phone{display:flex;align-items:center;background:var(--purple-bg);border:1.5px solid transparent;border-radius:10px;overflow:hidden;transition:all .2s}
+.flag-phone:focus-within{border-color:var(--purple)}
+.flag-part{display:flex;align-items:center;gap:5px;padding:0 12px;border-right:1.5px solid var(--border);height:46px;font-size:13px;font-weight:700;color:#555;flex-shrink:0}
+.flag-part img{width:20px;height:14px;border-radius:2px}
+.flag-input{border:none;background:none;outline:none;flex:1;padding:12px 14px;font-size:14px;font-family:'Nunito',sans-serif}
+
+/* PAIEMENT panel */
+.pay-grid{display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start}
+.pay-panel{background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);padding:28px}
+.pay-methods{display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.pay-method{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;font-size:14px;font-weight:700;color:var(--text-mid)}
+.pay-method:hover,.pay-method.selected{border-color:var(--purple);color:var(--purple);background:var(--purple-pale)}
+.pay-method input{accent-color:var(--purple);width:16px;height:16px}
+.pay-method img{width:28px;height:20px;object-fit:contain}
+.card-fields{display:flex;flex-direction:column;gap:12px}
+.field-label{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px}
+.card-num-input,.card-input{width:100%;padding:13px 16px;background:var(--purple-bg);border:1.5px solid transparent;border-radius:10px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;transition:all .2s}
+.card-num-input:focus,.card-input:focus{background:#fff;border-color:var(--purple);box-shadow:0 0 0 3px rgba(155,142,196,.1)}
+.card-num-input::placeholder,.card-input::placeholder{color:#bbb;font-size:13px}
+.card-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.code-promo-wrap{display:flex;gap:8px;margin-bottom:14px}
+.code-promo-wrap input{flex:1;padding:12px 16px;background:var(--purple-bg);border:1.5px solid transparent;border-radius:10px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;transition:all .2s;color:var(--text)}
+.code-promo-wrap input:focus{border-color:var(--purple)}
+.code-promo-wrap input::placeholder{color:#bbb}
+.btn-apply-code{padding:12px 20px;background:var(--gold);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-apply-code:hover{background:#b8941f}
+.promo-result{font-size:13px;font-weight:700;padding:8px 14px;border-radius:8px;margin-bottom:10px;display:none}
+.promo-result.ok{background:#e8f8ed;color:var(--green)}
+.promo-result.err{background:#fff0f0;color:var(--red)}
+.btn-paye{width:100%;padding:15px;background:var(--purple);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;transition:all .25s;font-family:'Nunito',sans-serif;margin-top:8px}
+.btn-paye:hover{background:var(--purple-d);transform:translateY(-2px);box-shadow:0 8px 24px rgba(155,142,196,.4)}
+</style>
+</head>
+<body>
+<div class="top-promo">
+  <div class="top-promo-left">Livraison gratuite pour toutes les commandes de plus de 50 €</div>
+  <div class="top-promo-right"><a href="#">Faqs</a><a href="#">ℹ Besoin d'aide?</a></div>
+</div>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-logo"><img src="photos/Kidcycle.png" alt="KidCycle"></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">Acheter maintenant</a>
+    <a href="nouveautes.html" class="nav-link">Nouveautés</a>
+    <a href="vente.html" class="nav-link">Vente</a>
+    <a href="mes-produits.html" class="nav-link">Mes produits</a>
+  </div>
+  <div class="nav-right">
+    <a href="panier.html" class="nav-cart"><img src="photos/icon-cart.svg" alt="">Mon Panier <span class="cart-badge js-cart-count">0</span></a>
+    <a href="favoris.html" class="nav-icon-btn"><img src="photos/icon-heart.svg" alt=""></a>
+    <a href="profil.html" class="nav-icon-btn"><img src="photos/icon-user.svg" alt=""></a>
+    <div class="nav-swaps">ii</div>
+    <div class="nav-search-wrap" style="position:relative">
+      <input type="text" placeholder="Search" id="search-input" autocomplete="off">
+      <button class="nav-search-btn" onclick="gotoSearch()"><img src="photos/search.png" alt=""></button>
+      <div class="search-dropdown" id="search-dd"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="checkout-wrap">
+  <!-- STEPPER -->
+  <div class="stepper">
+    <div class="step">
+      <div class="step-num active" id="step1-num">1</div>
+      <div class="step-label active" id="step1-lbl">Livraison</div>
+    </div>
+    <div class="step-line" id="step-line"></div>
+    <div class="step">
+      <div class="step-num" id="step2-num">2</div>
+      <div class="step-label" id="step2-lbl">Payement</div>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 1 : LIVRAISON -->
+  <div id="etape1">
+    <div class="checkout-grid">
+      <!-- Gauche -->
+      <div>
+        <div class="checkout-panel">
+          <h2 class="panel-title">Adresse de livraison</h2>
+          <div class="address-fieldset">
+            <span class="address-legend">Mon adresse</span>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <input class="address-input" id="addr-display" value="Livraison àQPWP+75..." placeholder="Votre adresse...">
+              <span class="address-pin">📍</span>
+            </div>
+            <div class="address-note" id="addr-note">Lorem Ipsum is simply dummy text of the printing ..</div>
+          </div>
+          <button class="btn-modify-addr" onclick="openModal('modal-addr')">Modifier mon adresse</button>
+
+          <h3 class="exp-title">Expedition</h3>
+
+          <label class="exp-option selected" id="exp-1" onclick="selectExp(this,'Chrono Relais',5.9)">
+            <input type="radio" class="exp-radio" name="expedition" checked>
+            <div class="exp-info">
+              <div class="exp-name">Chrono Relais - 2 à 4 jours</div>
+              <div class="exp-sub">Livraison en point relais<br>Gratuit dès 75€ d'achat en France Métropolitaine & Belgique</div>
+            </div>
+            <span class="exp-price">€5.9</span>
+          </label>
+
+          <label class="exp-option" id="exp-2" onclick="selectExp(this,'Livraison à domicile',5.9)">
+            <input type="radio" class="exp-radio" name="expedition">
+            <div class="exp-info">
+              <div class="exp-name">Livraison à domicile - 2 à 4 jours</div>
+              <div class="exp-sub">Livraison à domicile<br>Gratuit dès 75€ d'achat en France Métropolitaine & Belgique</div>
+            </div>
+            <span class="exp-price">€5.9</span>
+          </label>
+        </div>
+      </div>
+      <!-- Recap droite -->
+      <div class="recap-panel">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:16px">
+          <span class="recap-title">Récapitulatif</span>
+          <span class="recap-title-price">Prix TTC</span>
+        </div>
+        <div class="recap-items" id="recap-items-1"></div>
+        <div class="recap-totaux">
+          <div class="recap-row"><span>Total article(s)</span><span id="recap-nb">0</span></div>
+          <div class="recap-row"><span>Total <strong style="color:var(--warn)">SWAPS</strong></span><span id="recap-total-swaps" style="display:flex;align-items:center;gap:4px"><span class="swaps-coin">ii</span><strong id="recap-total-val">0.00</strong></span></div>
+          <div class="recap-row"><span class="swaps-purchased">SWAPS achetés</span><span id="recap-swaps-ach">0.00€</span></div>
+          <div class="recap-row">
+            <span>Frais de protection <span class="info-ico" title="">ⓘ<span class="info-tooltip">Les frais de protection permettent de sécuriser votre paiement en ligne.</span></span></span>
+            <span>1.50€</span>
+          </div>
+          <div class="recap-row">
+            <span>Commission <strong style="color:var(--warn)">SWAPS</strong> <span class="info-ico">ⓘ<span class="info-tooltip">Commission prélevée sur les transactions SWAPS.</span></span></span>
+            <span>1.90€</span>
+          </div>
+        </div>
+        <button class="btn-pay" onclick="goToPayment()">Posser au paiement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : PAIEMENT -->
+  <div id="etape2" style="display:none">
+    <div class="pay-grid">
+      <div>
+        <!-- Code promo / parrainage -->
+        <div class="checkout-panel" style="margin-bottom:18px">
+          <h2 class="panel-title">Code ou lien de parrainage</h2>
+          <div class="code-promo-wrap">
+            <input type="text" id="code-promo" placeholder="············" style="letter-spacing:2px">
+            <button class="btn-apply-code" onclick="applyPromo()">Appliquer le code</button>
+          </div>
+          <div class="promo-result" id="promo-result"></div>
+        </div>
+
+        <!-- Méthode paiement -->
+        <div class="pay-panel">
+          <h2 class="panel-title">Méthode de paiement</h2>
+          <div class="pay-methods">
+            <label class="pay-method selected" onclick="selectMethod(this,'paypal')">
+              <input type="radio" name="paymethod" checked>
+              <img src="https://cdn.cdnlogo.com/logos/p/45/paypal.svg" alt="PayPal"> Paypal
+            </label>
+            <label class="pay-method" onclick="selectMethod(this,'mastercard')">
+              <input type="radio" name="paymethod">
+              <img src="https://cdn.cdnlogo.com/logos/m/33/mastercard.svg" alt="Mastercard"> Mastercard
+            </label>
+            <label class="pay-method" onclick="selectMethod(this,'visa')">
+              <input type="radio" name="paymethod">
+              <img src="https://cdn.cdnlogo.com/logos/v/49/visa.svg" alt="Visa"> Visacard
+            </label>
+          </div>
+
+          <!-- Champs carte -->
+          <div class="card-fields" id="card-fields">
+            <div>
+              <div class="field-label">Numéro de la carte</div>
+              <input class="card-num-input" id="card-num" placeholder="Ex. 23 456 687 9997 445 43" oninput="formatCard(this)" maxlength="19">
+            </div>
+            <div class="card-row">
+              <div>
+                <div class="field-label">Date d'expiration</div>
+                <input class="card-input" id="card-exp" placeholder="MM/AA" oninput="formatExp(this)" maxlength="5">
+              </div>
+              <div>
+                <div class="field-label">CVV</div>
+                <input class="card-input" id="card-cvv" placeholder="***" maxlength="4" type="password">
+              </div>
+              <div>
+                <div class="field-label">Nom sur la carte</div>
+                <input class="card-input" id="card-name" placeholder="Ex. charlie Juit">
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-paye" id="btn-pay-final" onclick="doPay()">Payé</button>
+        </div>
+      </div>
+
+      <!-- Recap droite paiement -->
+      <div class="recap-panel">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:16px">
+          <span class="recap-title">Total article(s)</span>
+          <span id="recap-nb-2" style="font-size:22px;font-weight:900;color:var(--text);margin-left:auto">0</span>
+        </div>
+        <div class="recap-items" id="recap-items-2"></div>
+        <div class="recap-totaux">
+          <div class="recap-row"><span>Total <strong style="color:var(--warn)">SWAPS</strong></span><span id="recap-t2-val" style="display:flex;align-items:center;gap:4px"><span class="swaps-coin">ii</span><strong>0.00</strong></span></div>
+          <div class="recap-row"><span class="swaps-purchased">SWAPS achetés</span><span id="recap-ach-2">0.00€</span></div>
+          <div class="recap-row"><span>Frais de protection <span class="info-ico">ⓘ<span class="info-tooltip">Frais de protection sécurisée.</span></span></span><span>1.50€</span></div>
+          <div class="recap-row"><span>Commission <strong style="color:var(--warn)">SWAPS</strong> <span class="info-ico">ⓘ</span></span><span>1.90€</span></div>
+          <div class="recap-row"><span>Frais de Livraison à domicile <span class="info-ico">ⓘ</span></span><span id="recap-frais-liv">5.9€</span></div>
+          <div class="recap-row total">
+            <span>TOTAL</span>
+            <span id="recap-grand-total" style="color:var(--purple)">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIT ADRESSE (comme Figma image Livraison-1) -->
+<div class="modal-overlay modal-addr" id="modal-addr">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-addr')">✕</button>
+    <h2 class="modal-title">Edit address</h2>
+    <div class="form-field">
+      <label class="form-label">Adresse</label>
+      <input class="form-input" id="edit-addr" placeholder="Adresse de livraison">
+      <div style="font-size:12px;color:var(--text-light);margin-top:4px">Lorem Ipsum is simply dummy text of the printing ..</div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label class="form-label">Num de téléphone</label>
+        <div class="flag-phone">
+          <div class="flag-part"><img src="https://flagcdn.com/w20/fr.png" alt="FR"> +33</div>
+          <input class="flag-input" id="edit-tel" placeholder="">
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Pays</label>
+        <select class="form-select" id="edit-pays">
+          <option>France</option><option>Tunisie</option><option>Belgique</option><option>Suisse</option><option>Maroc</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-field">
+        <label class="form-label">Ville</label>
+        <input class="form-input" id="edit-ville" placeholder="Ville">
+      </div>
+      <div class="form-field">
+        <label class="form-label">Code postal</label>
+        <input class="form-input" id="edit-cp" placeholder="000000">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeModal('modal-addr')">Annuler</button>
+      <button class="modal-btn-submit" onclick="saveAddr()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SUCCÈS COMMANDE -->
+<div class="modal-overlay" id="modal-success">
+  <div class="modal-box" style="max-width:480px;text-align:center">
+    <div style="font-size:60px;margin-bottom:16px">🎉</div>
+    <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:10px">Commande confirmée !</h2>
+    <p style="font-size:14px;color:var(--text-mid);margin-bottom:8px">Votre commande a été passée avec succès.</p>
+    <p style="font-size:14px;font-weight:700;color:var(--purple)" id="cmd-numero"></p>
+    <p style="font-size:13px;color:var(--text-light);margin-top:8px;margin-bottom:24px">Vous recevrez un email de confirmation sous peu.</p>
+    <a href="mes-commandes.html" class="btn btn-primary btn-block">Voir mes commandes</a>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="site-footer-left">Livraison gratuite pour toutes les commandes de plus de 50 €</div>
+  <div class="site-footer-right"><a href="#">Faqs</a><a href="#">ℹ Besoin d'aide?</a></div>
+</footer>
+<div id="kc-toast"></div>
+<script src="app.js"></script>
+<script>
+var cart=[],sousTotal=0,fraisLiv=5.9,modeLiv='Chrono Relais',modePay='paypal',promoData=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  KC.initNav();
+  KC.initSearch('search-input','search-dd');
+  if(!KC.isLogged()){KC.requireLogin('passer commande');location.href='connexion.html';return;}
+  cart=KC.getCart();
+  if(!cart.length){KC.toast('Votre panier est vide','warn');setTimeout(function(){location.href='panier.html';},1000);return;}
+  sousTotal=cart.reduce(function(s,i){return s+(parseFloat(i.prix)*i.quantite);},0);
+  renderRecap1();renderRecap2();
+  // Pre-fill address from user
+  var u=KC.user();
+  if(u&&u.adresse) document.getElementById('addr-display').value=u.adresse;
+  if(u&&u.ville) document.getElementById('addr-note').textContent=(u.ville||'')+(u.code_postal?' '+u.code_postal:'')+(u.pays?', '+u.pays:'');
+  // Setup modals
+  document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});});
+});
+
+function renderRecap1(){
+  document.getElementById('recap-nb').textContent=cart.length;
+  document.getElementById('recap-total-val').textContent=sousTotal.toFixed(2);
+  document.getElementById('recap-swaps-ach').textContent=(sousTotal*0.05).toFixed(2)+'€';
+  var html=cart.map(function(i){return'<div class="recap-item"><img src="'+i.image+'" alt="'+i.nom+'" onerror="this.src=\'photos/cl1.png\'"><div class="recap-item-info"><div class="recap-item-name">'+i.nom+'</div><div class="recap-item-sub">Lorem: '+i.quantite+' <a onclick="removeFromCart(\''+encodeURIComponent(i.nom)+'\')">x Supprimer</a></div></div><div class="recap-item-price"><span class="swaps-coin" style="width:16px;height:16px;font-size:8px">ii</span>'+(parseFloat(i.prix)*i.quantite).toFixed(2)+'</div></div>';}).join('');
+  document.getElementById('recap-items-1').innerHTML=html;
+}
+function renderRecap2(){
+  document.getElementById('recap-nb-2').textContent=cart.length;
+  document.getElementById('recap-ach-2').textContent=(sousTotal*0.05).toFixed(2)+'€';
+  document.getElementById('recap-frais-liv').textContent=fraisLiv.toFixed(1)+'€';
+  var total=sousTotal+fraisLiv+1.50+1.90;
+  if(promoData){
+    if(promoData.type==='pourcentage') total-=sousTotal*promoData.valeur/100;
+    else if(promoData.type==='montant') total-=Math.min(promoData.valeur,sousTotal);
+    else if(promoData.type==='livraison') total-=fraisLiv;
+  }
+  document.getElementById('recap-grand-total').textContent=Math.max(0,total).toFixed(2)+' S';
+  var html=cart.map(function(i){return'<div class="recap-item"><img src="'+i.image+'" alt="'+i.nom+'" onerror="this.src=\'photos/cl1.png\'"><div class="recap-item-info"><div class="recap-item-name">'+i.nom+'</div><div class="recap-item-sub">Lorem: '+i.quantite+' <a onclick="removeFromCart(\''+encodeURIComponent(i.nom)+'\')">x Supprimer</a></div></div><div class="recap-item-price"><span class="swaps-coin" style="width:16px;height:16px;font-size:8px">ii</span>'+(parseFloat(i.prix)*i.quantite).toFixed(2)+'</div></div>';}).join('');
+  document.getElementById('recap-items-2').innerHTML=html;
+}
+
+function removeFromCart(nom){
+  var n=decodeURIComponent(nom);
+  cart=cart.filter(function(i){return i.nom!==n;});
+  KC.saveCart(cart);
+  if(!cart.length){location.href='panier.html';return;}
+  sousTotal=cart.reduce(function(s,i){return s+(parseFloat(i.prix)*i.quantite);},0);
+  renderRecap1();renderRecap2();
+}
+
+function selectExp(el,mode,prix){
+  document.querySelectorAll('.exp-option').forEach(function(o){o.classList.remove('selected');});
+  el.classList.add('selected');
+  modeLiv=mode; fraisLiv=prix;
+  renderRecap2();
+}
+
+function goToPayment(){
+  var addr=document.getElementById('addr-display').value.trim();
+  if(!addr){KC.toast('Entrez votre adresse de livraison','warn');return;}
+  document.getElementById('etape1').style.display='none';
+  document.getElementById('etape2').style.display='block';
+  document.getElementById('step1-num').classList.remove('active');
+  document.getElementById('step1-num').classList.add('done');
+  document.getElementById('step1-num').textContent='✓';
+  document.getElementById('step1-lbl').classList.remove('active');
+  document.getElementById('step1-lbl').classList.add('done');
+  document.getElementById('step-line').classList.add('done');
+  document.getElementById('step2-num').classList.add('active');
+  document.getElementById('step2-lbl').classList.add('active');
+  renderRecap2();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selectMethod(el,method){
+  document.querySelectorAll('.pay-method').forEach(function(m){m.classList.remove('selected');});
+  el.classList.add('selected');
+  modePay=method;
+  document.getElementById('card-fields').style.display=method==='paypal'?'none':'flex';
+}
+
+function formatCard(inp){
+  var v=inp.value.replace(/\D/g,'');
+  inp.value=v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExp(inp){
+  var v=inp.value.replace(/\D/g,'');
+  if(v.length>=3) inp.value=v.slice(0,2)+'/'+v.slice(2,4);
+}
+
+function applyPromo(){
+  var code=document.getElementById('code-promo').value.trim().toUpperCase();
+  if(!code){KC.toast('Entrez un code promo','warn');return;}
+  var el=document.getElementById('promo-result');
+  KC.GET('/misc.php?action=promo&code='+code)
+    .then(function(r){
+      el.style.display='block';
+      if(r.ok){el.className='promo-result ok';el.textContent='✓ Code "'+code+'" appliqué ! -'+r.data.valeur+(r.data.type==='pourcentage'?'%':r.data.type==='montant'?' S':'€ de livraison');promoData=r.data;renderRecap2();}
+      else{el.className='promo-result err';el.textContent='✗ '+r.err;}
+    })
+    .catch(function(){el.style.display='block';el.className='promo-result err';el.textContent='✗ Erreur réseau';});
+}
+
+function doPay(){
+  var btn=document.getElementById('btn-pay-final');
+  var addr=document.getElementById('addr-display').value.trim();
+  if(!addr){KC.toast('Adresse de livraison manquante','err');goToPayment();return;}
+  KC.spin(btn);
+  var payload={
+    adresse:addr,
+    ville:document.getElementById('edit-ville')?document.getElementById('edit-ville').value:'',
+    code_postal:document.getElementById('edit-cp')?document.getElementById('edit-cp').value:'',
+    pays:document.getElementById('edit-pays')?document.getElementById('edit-pays').value:'France',
+    tel:document.getElementById('edit-tel')?document.getElementById('edit-tel').value:'',
+    mode_livraison:modeLiv,frais_livraison:fraisLiv,
+    mode_paiement:modePay,
+    code_promo:document.getElementById('code-promo').value.trim().toUpperCase()
+  };
+  KC.POST('/commandes.php',payload)
+    .then(function(r){
+      KC.unspin(btn);
+      if(!r.ok){KC.toast(r.err||'Erreur lors du paiement','err');return;}
+      document.getElementById('cmd-numero').textContent='N° de commande : '+r.numero;
+      document.getElementById('modal-success').classList.add('open');
+      KC.saveCart([]);KC.updateBadge();
+    })
+    .catch(function(){
+      KC.unspin(btn);
+      // Fallback demo
+      KC.saveCart([]);KC.updateBadge();
+      document.getElementById('cmd-numero').textContent='N° de commande : KC'+Date.now();
+      document.getElementById('modal-success').classList.add('open');
+    });
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function saveAddr(){
+  var addr=document.getElementById('edit-addr').value.trim();
+  if(addr) document.getElementById('addr-display').value=addr;
+  var ville=document.getElementById('edit-ville').value;
+  var cp=document.getElementById('edit-cp').value;
+  var pays=document.getElementById('edit-pays').value;
+  document.getElementById('addr-note').textContent=ville+(cp?' '+cp:'')+(pays?', '+pays:'');
+  closeModal('modal-addr');KC.toast('Adresse mise à jour','ok');
+}
+
+function gotoSearch(){var q=document.getElementById('search-input').value.trim();if(q)location.href='nouveautes.html?q='+encodeURIComponent(q);}
+document.getElementById('search-input').addEventListener('keydown',function(e){if(e.key==='Enter')gotoSearch();});
+</script>
+</body>
+</html>
